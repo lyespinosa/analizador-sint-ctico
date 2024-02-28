@@ -1,0 +1,45 @@
+* {
+  padding: 0%;
+  margin: 0%;
+}
+
+.errorsLog {
+  flex: 1;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  display: block;
+  text-align: left;
+  list-style: none;
+  line-height: 24px;
+}
+
+.heading {
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+}
+
+.content {
+  background-color: rgb(34, 34, 34);
+  height: 100vh;
+}
+
+.clearButton {
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0px 5px;
+}
+
+.buttonSubmit {
+  background-color: rgb(38, 80, 156);
+  color: white;
+  border: 1px solid white;
+  font-size: 24px;
+  border-radius: 5px;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  display: block;
+  margin: 20px auto;
+}
