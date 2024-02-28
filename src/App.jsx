@@ -30,36 +30,42 @@ const CodeValidator = () => {
 
   return (
     <div className="content">
-      <h3 className="errorsLog" >Analizador sintáctico</h3>
-      <CodeMirror
-        value={code}
-        height="400px"
+      <div className="left">
+        <h3 className="title" >Analizador sintáctico</h3>
+        <CodeMirror
+          value={code}
+          height="400px"
 
-        theme={vscodeDark}
-        onChange={(editor, change) => {
-          handleCodeChange(editor);
-          console.log(code)
-        }}
-      />
-
-      <div style={{ marginLeft: "20px" }}>
-        {Object.keys(errors).length > 0 ? (
-          <ul className="errorsLog">
-            {Object.values(errors).map((error, index) => (
-              <li key={index}>{error}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="errorsLog">El código es válido.</p>
-        )}
+          theme={vscodeDark}
+          onChange={(editor, change) => {
+            handleCodeChange(editor);
+            console.log(code)
+          }}
+        />
+        <button onClick={handleSubmit} className="buttonSubmit">Validar</button>
       </div>
 
-      <div style={{ marginLeft: "20px", marginTop: "100px" }}>
-        <h3 style={{ color: 'white' }}>Lexer</h3>
-        <p className="errorsLog">{lexerResult}</p>
-      </div>
+      <div className="right">
 
-      <button onClick={handleSubmit} className="buttonSubmit">Validar</button>
+        <div style={{ marginLeft: "20px" }}>
+          {Object.keys(errors).length > 0 ? (
+            <ul className="errorsLog">
+              {Object.values(errors).map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="errorsLog">El código es válido.</p>
+          )}
+        </div>
+
+        <div style={{ marginLeft: "20px", marginTop: "100px" }}>
+          <h3 >Lexer</h3>
+          <p className="errorsLog">{lexerResult}</p>
+        </div>
+
+
+      </div>
     </div>
   );
 };
