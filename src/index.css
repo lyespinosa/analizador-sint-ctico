@@ -1,7 +1,7 @@
 * {
   padding: 0%;
   margin: 0%;
-  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
 }
 
 .title{
@@ -71,4 +71,18 @@
   cursor: pointer;
   display: block;
   margin: 20px auto;
+}
+
+
+.output{
+  resize: none;
+  font-size: 1.2em;
+  line-height: 1.1;
+  text-align: justify;
+  font-weight: 500;
+  background-color: rgba(65, 105, 225, 0);
+  border: none;
+  resize: none;
+  width: 2000px;
+  margin-top: 20px;
 }

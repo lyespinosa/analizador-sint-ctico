@@ -8,7 +8,7 @@ import analizarTexto from "./analizadores/lexer";
 const CodeValidator = () => {
   const [code, setCode] = useState("");
   const [errors, setErrors] = useState({});
-  const [lexerResult, setLexerResult] = useState('');
+  const [lexerResult, setLexerResult] = useState([]);
 
 
 
@@ -18,12 +18,11 @@ const CodeValidator = () => {
   };
 
   const handleSubmit = () => {
+    console.log(code);
     let errors = validateCode(code);
     let resultado = analizarTexto(code);
 
-    const formateados = Object.entries(resultado).map(([categoria, valores]) => `${categoria} : ${valores}`).join('\n');
-
-    setLexerResult(formateados)
+    setLexerResult(resultado)
 
     setErrors(errors);
   }
@@ -37,9 +36,8 @@ const CodeValidator = () => {
           height="400px"
 
           theme={vscodeDark}
-          onChange={(editor, change) => {
+          onChange={(editor) => {
             handleCodeChange(editor);
-            console.log(code)
           }}
         />
         <button onClick={handleSubmit} className="buttonSubmit">Validar</button>
@@ -61,7 +59,7 @@ const CodeValidator = () => {
 
         <div style={{ marginLeft: "20px", marginTop: "100px" }}>
           <h3 >Lexer</h3>
-          <p className="errorsLog">{lexerResult}</p>
+          {lexerResult.map((item, index) => <p key={index}>{item}</p>)}
         </div>
 
 

@@ -10,7 +10,7 @@ export default function analizarTexto(texto) {
 
     let gruposEncontrados = {
         "Palabras Reservadas": new Set(),
-        "Numeros": new Set(),
+        "Números": new Set(),
         "Asignacion": new Set(),
         "Operadores Aritmeticos": new Set(),
         "Llaves": new Set(),
@@ -39,7 +39,7 @@ export default function analizarTexto(texto) {
                     gruposEncontrados["Palabras Reservadas"].add(token);
                     break;
                 case numeros.test(token):
-                    gruposEncontrados["Numeros"].add(token);
+                    gruposEncontrados["Números"].add(token);
                     break;
                 case token === asignacion:
                     gruposEncontrados["Asignacion"].add(token);
@@ -69,7 +69,6 @@ export default function analizarTexto(texto) {
         let palabrasSinRepetir = Array.from(gruposEncontrados[grupo]);
         if (palabrasSinRepetir.length > 0) {
             resultado.push(grupo + " : " + JSON.stringify(palabrasSinRepetir));
-            console.log(grupo + " : " + JSON.stringify(palabrasSinRepetir));
         }
     }
     return resultado;
