@@ -18,24 +18,24 @@ export default function SemanticAnalyzer() {
     // Método para verificar si una variable ya ha sido declarada
     this.checkVariableDeclaration = function (variableName) {
         if (!this.symbolTable[variableName]) {
-            console.error(`Error: La variable ${variableName} no ha sido declarada.`);
-            return false;
+            let error = `Error: La variable ${variableName} no ha sido declarada.`;
+            console.error(error);
+            return error;
         }
-        return true;
     };
 
      // Método para verificar la compatibilidad de tipos en una asignación
      this.checkTypeCompatibility = function (variableName, assignedType) {
         const declaredType = this.symbolTable[variableName];
         if (declaredType !== assignedType) {
-            console.error(`Error: Tipo de datos incompatible ${assignedType} asignado a la variable ${variableName}.`);
-            return false;
+            let error = `Error: Tipo de datos incompatible ${assignedType} asignado a la variable ${variableName}.`
+            console.error(error);
+            return error;
         }
-        return true;
     };
 
      // Método para reasignar valor a una variable
-     this.reassignVariableValue = function (variableName, assignedType) {
+     this.reassignVariableValue = function (variableName, assignedType) {   
         if (!this.symbolTable[variableName]) {
             this.symbolTable[variableName] = assignedType;
         }
@@ -45,11 +45,10 @@ export default function SemanticAnalyzer() {
     // Método para agregar una función a la tabla de funciones
     this.addFunction = function (functionName, parameterTypes) {
         if (this.functionTable[functionName]) {
-            console.error(`Error: La función ${functionName} ya ha sido declarada.`);
-            return false;
+            let error = `Error: La función ${functionName} ya ha sido declarada.`;
+            return error;
         }
         this.functionTable[functionName] = parameterTypes;
-        return true;
     };
 
     // Método para verificar si una función ha sido declarada
@@ -78,31 +77,6 @@ export default function SemanticAnalyzer() {
     };
 }
 
-// Ejemplo de uso del analizador semántico
-const analyzer = new SemanticAnalyzer();
 
-// Agregar variables a la tabla de símbolos
-analyzer.addVariable("nombre", "string");
-analyzer.addVariable("edad", "int");
-
-// Verificar declaración de variables
-analyzer.checkVariableDeclaration("nombre");
-analyzer.checkVariableDeclaration("edad");
-
-// Reasignar valor a variables
-analyzer.reassignVariableValue("nombre", "float");
-analyzer.reassignVariableValue("edad", "int");
-
-// Agregar funciones a la tabla de funciones
-analyzer.addFunction("sumar", ["int", "int"]);
-analyzer.addFunction("concatenar", ["string", "string"]);
-
-// Verificar declaración de funciones
-analyzer.checkFunctionDeclaration("sumar");
-analyzer.checkFunctionDeclaration("restar");
-
-// Verificar llamadas a funciones con cantidad y tipo correcto de parámetros
-analyzer.checkFunctionCall("sumar", ["int", "int"]);
-analyzer.checkFunctionCall("concatenar", ["int", "int"]);
 
 
