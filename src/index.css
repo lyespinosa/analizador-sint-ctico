@@ -1,7 +1,8 @@
 * {
   padding: 0%;
   margin: 0%;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
 }
 
 .title {
@@ -38,18 +39,32 @@
 
 .left {
   width: 50%;
-  padding: 20px;
   background-color: rgb(201, 201, 201);
-  height: 550px;
+  height: 650px;
   border: 2px solid rgb(172, 172, 172);
   border-radius: 10px;
+  overflow: hidden;
+}
+
+.output-content{
+  background-color: rgb(229, 229, 229);
+  height: 130px;
+  width: 100%;
+  overflow-y: scroll;
+}
+
+.output-title{
+  font-size: 14px;
+  background-color: rgb(229, 229, 229);
+  font-weight: 700;
+  padding: 5px 10px;
 }
 
 .right {
   width: 40%;
   padding: 20px;
   background-color: rgb(240, 240, 240);
-  height: 550px;
+  height: 650px;
   border: 2px solid rgb(172, 172, 172);
   border-radius: 10px;
 }

@@ -10,6 +10,7 @@ const CodeValidator = () => {
   const [errors, setErrors] = useState({});
   const [lexerResult, setLexerResult] = useState([]);
   const [semanticErrors, setSemanticErrors] = useState([]);
+  const [outputs, setOutputs] = useState([]);
 
 
 
@@ -19,9 +20,10 @@ const CodeValidator = () => {
   };
 
   const handleSubmit = () => {
-    let erroresSintacosYSemanticos = validateCode(code);
-    setSemanticErrors(erroresSintacosYSemanticos[1]);
-    setErrors(erroresSintacosYSemanticos[0]);
+    let erroresSintacticosSemanticosYSalida = validateCode(code);
+    setErrors(erroresSintacticosSemanticosYSalida[0]);
+    setSemanticErrors(erroresSintacticosSemanticosYSalida[1]);
+    setOutputs(erroresSintacticosSemanticosYSalida[2]);
 
     let resultadoLexicos = analizarTexto(code);
 
@@ -35,7 +37,7 @@ const CodeValidator = () => {
         <h3 className="title" >Analizador semántico</h3>
         <CodeMirror
           value={code}
-          height="400px"
+          height="350px"
 
           theme={vscodeDark}
           onChange={(editor) => {
@@ -43,6 +45,11 @@ const CodeValidator = () => {
           }}
         />
         <button onClick={handleSubmit} className="buttonSubmit">Validar</button>
+
+        <h3 className="output-title">Salida</h3>
+        <div className="output-content">
+        {outputs.map((output, index) => (<p style={{gap: 4, paddingLeft: 8}} key={index}>{output}</p>)  )}
+        </div>
       </div>
 
       <div className="right">
@@ -59,8 +66,8 @@ const CodeValidator = () => {
           )}
         </div>
 
-        <div style={{ marginLeft: "20px", marginTop: 10, height: 150, overflow: 'hidden' }}>
-          <h3 >Lexer</h3>
+        <div style={{ marginLeft: "20px", marginTop: 10, height: 185, overflowY: 'scroll' }}>
+          <h3 >Lexemas</h3>
           {lexerResult.map((item, index) => <p style={{paddingLeft: 5}} key={index}>{item}</p>)}
         </div>
 

@@ -10,29 +10,31 @@ const grammar = [
         message: "La asignación no es válida.",
     },
     {
-        regex: /^(|task\s+[a-zA-Z]+\s*\((?:[a-zA-Z]+)?\)\s*\{\s*print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\)\s*\})$/,
+        regex: /^(|task\s+[a-zA-Z]+\s*\((?:[a-zA-Z]+)?\)\s*\{\s*print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\);\s*\})$/,
         message: "La definición de la función no es válida.",
     },
     {
-        regex: /^(|iterate\s+i\s+range\s+([0-9]+)\s*\.\.\.\s*([0-9]+)\s*\{\s*print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\)\s*\})$/, //terminado
+        regex: /^(|iterate\s+i\s+range\s+([0-9]+)\s*\.\.\.\s*([0-9]+)\s*\{\s*print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\);\s*\})$/, //terminado
         message: "El bucle no es válido.",
     },
     {
         regex:
-            /^(|conditional\s*\(\s*([a-zA-Z]+|\d+)\s*(<|>|<=|>=|==|!=)\s*([a-zA-Z]+|\d+)\s*\)\s*then\s*\{\s*print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\)\s*\})$/, //terminado
+            /^(|conditional\s*\(\s*([a-zA-Z]+|\d+)\s*(<|>|<=|>=|==|!=)\s*([a-zA-Z]+|\d+)\s*\)\s*then\s*\{\s*print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\);\s*\})$/, //terminado
         message: "El condicional no es válido.",
     },
     {
-        regex: /^(|mainTask\s*\(\)\s*{\s*print\(\s*(?:[a-zA-Z]+|'[^']*')(?:\s*\+\s*(?:[a-zA-Z]+|'[^']*'))?\s*\)\s*\})$/, //terminado
+        regex: /^(|mainTask\s*\(\)\s*{\s*print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\);\s*\})$/, //terminado
         message: "Funcion main no válida.",
     },
     {
-        regex: /^(|print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\));$/, //terminado
+        regex: /^(print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\));$/, //terminado
     }
 
 ];
 
 let semanticLogErrors = []
+
+let outputs = [];
 
 const validateBrackets = (codeToValidate) => {
     const stack = [];
@@ -65,105 +67,176 @@ const validateBrackets = (codeToValidate) => {
 };
 
 
+const evalCondition = (valor1, operador, valor2) => {
+
+    let valor1Int = parseInt(valor1)
+    let valor2Int = parseInt(valor2)
+
+    switch (operador) {
+        case "==":
+            return valor1Int == valor2Int;
+        case "!=":
+            return valor1Int != valor2Int;
+        case ">":
+            return valor1Int > valor2Int;
+        case ">=":
+            return valor1Int >= valor2Int;
+        case "<":
+            return valor1Int < valor2Int;
+        case "<=":
+            return valor1Int <= valor2Int;
+        default:
+            return false;
+    }
+}
+
 const validateLine = (line, lineNumber, analyzer) => {
 
     for (let rule of grammar) {
         if (rule.regex.test(line.trim())) {
 
-            let paramVariableTemp = null;
+            let functionParam = null;
+            let conditionAccepted = null;
+            let iterationIndices = [];
+            let fromAnIteratation = false;
+            let fromMainTask = false;
 
             if (line.startsWith("task")) {
-                const functionNameAndParams = line.match(/task\s+(\w+)\s*(?:\((.*)\))?/);
-                const functionName = functionNameAndParams[1];
-
-                console.log(functionName)
+                const functionNameAndParam = line.match(/task\s+(\w+)\s*(?:\((.*)\))?/);
+                const functionName = functionNameAndParam[1];
                 let error = analyzer.addFunction(functionName, []);
                 error && semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
-
-                const params = functionNameAndParams[2];
-                if (params) {
-                    paramVariableTemp = params;
+                const param = functionNameAndParam[2];
+                if (param) {
+                    functionParam = param;
                 }
             }
-
+            if (line.startsWith("mainTask")) {
+                fromMainTask = true;
+            }
             if (line.trim().startsWith("conditional")) {
                 const conditionStatement = line.match(/conditional\s*\((.*?)\)/);
                 if (conditionStatement) {
                     const conditionContent = conditionStatement[1].trim();
                     const conditionMatch = conditionContent.match(/(\w+|\d+)\s*(<=|>=|==|!=|<|>)\s*(\w+|\d+)/);
                     if (conditionMatch) {
-                        const variable1 = conditionMatch[1];
+                        let variable1 = conditionMatch[1];
                         const operator = conditionMatch[2];
-                        const variable2 = conditionMatch[3];
+                        let variable2 = conditionMatch[3];
 
-                        if (isNaN(Number(variable2))){
+                        if (isNaN(Number(variable1))) {
                             let error = analyzer.checkVariableDeclaration(variable1);
                             error && semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                            variable1 = analyzer.getVariableValue(variable1);
                         }
-                        if (isNaN(Number(variable2))){
+                        if (isNaN(Number(variable2))) {
                             let error = analyzer.checkVariableDeclaration(variable2);
                             error && semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                            variable2 = analyzer.getVariableValue(variable2);
                         }
-                        
-                            
-                        
-                        // Validamos el operador lógico
-                        const validOperators = ["<", ">", "<=", ">=", "==", "!="];
-                        if (!validOperators.includes(operator)) {
-                            return `Error en la línea ${lineNumber}: Operador lógico no válido "${operator}".`;
+                        const conditionResult = evalCondition(variable1, operator, variable2);
+                        if (conditionResult) {
+                            conditionAccepted = true;
                         }
-                    } else {
-                        return `Error en la línea ${lineNumber}: Condición no válida "${conditionContent}".`;
+                        else {
+                            conditionAccepted = false;
+                        }
                     }
                 }
             }
 
+            if (line.trim().startsWith("iterate")) {
+                const iterateStatement = line.match(/iterate\s+i\s+range\s+(\d+)\s*\.\.\.\s*(\d+)/);
+                if (iterateStatement) {
+                    const iterateFrom = iterateStatement[1];
+                    const iterateTo = iterateStatement[2];
+                    for (let i = iterateFrom; i <= iterateTo; i++) {
+                        iterationIndices.push(i);
+                    }
+                }
+                fromAnIteratation = true;
+            }
+
             if (line.trim().startsWith("var")) {
-                const variableDeclaration = line.trim().substring(4).trim();
-                const variableName = variableDeclaration.split("=")[0].trim();
-                const variableType = typeof eval(variableDeclaration.split("=")[1].trim());
-                console.log('Variable creada')
-                let error = analyzer.reassignVariableValue(variableName, variableType);
-                error && semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
-                
+                const regexExtractData = /^var\s+(\w+)\s*=\s*([^;]+);$/;
+                const valores = line.trim().match(regexExtractData);
+                if (valores) {
+                    const variableName = valores[1].trim();
+                    const variableValue = valores[2].trim();
+                    let error = analyzer.reassignVariableValue(variableName, variableValue);
+                    error && semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                }
+
             }
             else if (line.trim().startsWith("print")) {
-                const printStatement = line.match(/print\s*\((.*?)\)/);
-                if (printStatement) {
-                    const printContent = printStatement[1].trim();
-                    const words = printContent.match(/'[^']*'|\b\w+\b/g);
-                    if (words) {
-                        const variables = words.filter(word => !word.startsWith("'"));
-                        for (let variable of variables) {
-                            let error = analyzer.checkVariableDeclaration(variable);
-                            error && semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                const regexExtractData = /'([^']*)'\s*\+\s*(\w+)\s*/;
+                const valores = regexExtractData.exec(line);
+                
+                if (valores) {
+                    const text = valores[1];
+                    const variable = valores[2];
+
+                    if (variable) {
+                        let error = analyzer.checkVariableDeclaration(variable)
+                        if (error) {
+                            semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                        }else {
+                            const newPrint = text +  analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
+                            outputs.push(newPrint);
                         }
                     }
                 }
             }
             else if (line.includes("print")) {
-                console.log('print')
                 const IntoPrint = line.match(/print\s*\((.*?)\)/);
-                if (IntoPrint) {
-                    const contentTrimmed = IntoPrint[1].trim();
-                    const words = contentTrimmed.match(/'[^']*'|\b\w+\b/g);
-                    if (words) {
-                        const variable = words.find(word => !word.startsWith("'"));
-                        if (variable) {
-                            if (variable == paramVariableTemp) {
-                                paramVariableTemp = null;
-                                return null;
+                const regexExtractData = /'([^']*)'\s*\+\s*(\w+)\s*/;
+                const valores = regexExtractData.exec(IntoPrint[0]);
+                if (valores) {
+                    const text = valores[1];
+                    const variable = valores[2];
+                    console.log(variable)
+
+                    if (variable) {
+                        if (fromAnIteratation && iterationIndices.length > 0) {
+                            if (variable == 'i' && !analyzer.getVariableValue('i')) {
+                                for (let i = 0; i < iterationIndices.length; i++) {
+                                    const newPrint = text + iterationIndices[i];
+                                    outputs.push(newPrint);
+                                }
                             }
-                            let error = analyzer.checkVariableDeclaration(variable);
-                            error && semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                            else {
+                                let error = analyzer.checkVariableDeclaration(variable);
+                                if (error) {
+                                    semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                                } else {
+                                    for (let i = 0; i < iterationIndices.length; i++) {
+                                        const newPrint = text +  analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
+                                        outputs.push(newPrint);
+                                    }
+                                }
+                            }
                         }
-                       
+                        else if (fromMainTask) {
+                            const newPrint = text +  analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
+                            outputs.push(newPrint);
+                            fromMainTask = false;
+                        }
+                        else if (variable == functionParam) {
+                            functionParam = null;
+                        } 
+                        else {
+                            let error = analyzer.checkVariableDeclaration(variable);
+                            if (error) {
+                                semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                            } else if (conditionAccepted) {
+                                const newPrint = text +  analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
+                                outputs.push(newPrint);
+                                conditionAccepted = false;
+                            }
+                        }
                     }
                 }
             }
-            
-
-           
             return null;
         }
     }
@@ -221,7 +294,13 @@ const validateCode = (codeToValidate) => {
     const finalSemanticErrors = semanticLogErrors
     semanticLogErrors = [];
 
-    return [newErrors, finalSemanticErrors];
+    let finalOutputs = []
+    if (finalSemanticErrors.length == 0) {
+        finalOutputs = outputs;
+        outputs = [];
+    }
+
+    return [newErrors, finalSemanticErrors, finalOutputs];
 };
 
 export default validateCode;
