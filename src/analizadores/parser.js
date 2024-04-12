@@ -116,6 +116,7 @@ const validateLine = (line, lineNumber, analyzer) => {
             }
             if (line.trim().startsWith("conditional")) {
                 const conditionStatement = line.match(/conditional\s*\((.*?)\)/);
+                console.log(conditionStatement);
                 if (conditionStatement) {
                     const conditionContent = conditionStatement[1].trim();
                     const conditionMatch = conditionContent.match(/(\w+|\d+)\s*(<=|>=|==|!=|<|>)\s*(\w+|\d+)/);
@@ -123,6 +124,7 @@ const validateLine = (line, lineNumber, analyzer) => {
                         let variable1 = conditionMatch[1];
                         const operator = conditionMatch[2];
                         let variable2 = conditionMatch[3];
+                        console.log(variable1, operator, variable2);
 
                         if (isNaN(Number(variable1))) {
                             let error = analyzer.checkVariableDeclaration(variable1);
@@ -137,9 +139,11 @@ const validateLine = (line, lineNumber, analyzer) => {
                         const conditionResult = evalCondition(variable1, operator, variable2);
                         if (conditionResult) {
                             conditionAccepted = true;
+                            console.log('true');
                         }
                         else {
                             conditionAccepted = false;
+                            console.log('false');
                         }
                     }
                 }
@@ -194,7 +198,6 @@ const validateLine = (line, lineNumber, analyzer) => {
                 if (valores) {
                     const text = valores[1];
                     const variable = valores[2];
-                    console.log(variable)
 
                     if (variable) {
                         if (fromAnIteratation && iterationIndices.length > 0) {
@@ -244,20 +247,33 @@ const validateLine = (line, lineNumber, analyzer) => {
 };
 
 const validateCode = (codeToValidate) => {
+
+
     const lines = codeToValidate.split("\n");
 
     const newErrors = {};
 
     let blockCode = "";
-
     let insideBlock = false;
 
     const analyzer = new SemanticAnalyzer();
 
+    let statementWithBracketsOneLine = '';
+
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+        let line = lines[i];
+        
 
         if (line.trim().startsWith("task") || line.trim().startsWith("iterate") || line.trim().startsWith("mainTask") || line.trim().startsWith("conditional")) {
+
+           if (!/\n/.test(line)) {
+                statementWithBracketsOneLine = line.replace(/\{/g, "{\n").replace(/\}/g, "\n}");
+                const error = validateLine(statementWithBracketsOneLine, i, analyzer);
+                if (error) {
+                    newErrors[i] = error;
+                }
+            }
+            
             if (blockCode.trim() !== "") {
                 const error = validateLine(blockCode, i, analyzer);
                 if (error) {
@@ -269,9 +285,11 @@ const validateCode = (codeToValidate) => {
             blockCode += line + "\n";
             insideBlock = true;
         } else if (insideBlock) {
+
             blockCode += line + "\n";
             if (line.trim() === "}") {
                 insideBlock = false;
+                console.log(blockCode);
                 const error = validateLine(blockCode, i, analyzer);
                 if (error) {
                     newErrors[i] = error;
