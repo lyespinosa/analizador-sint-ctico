@@ -173,7 +173,7 @@ const validateLine = (line, lineNumber, analyzer) => {
             else if (line.trim().startsWith("print")) {
                 const regexExtractData = /'([^']*)'\s*\+\s*(\w+)\s*/;
                 const valores = regexExtractData.exec(line);
-                
+
                 if (valores) {
                     const text = valores[1];
                     const variable = valores[2];
@@ -182,15 +182,15 @@ const validateLine = (line, lineNumber, analyzer) => {
                         let error = analyzer.checkVariableDeclaration(variable)
                         if (error) {
                             semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
-                        }else {
-                            const newPrint = text +  analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
+                        } else {
+                            const newPrint = text + analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
                             outputs.push(newPrint);
                         }
                     }
                 }
-                else{
+                else {
                     semanticLogErrors.push(`Linea ${lineNumber} Error: La instrucción print debe contener una cadena seguida de una variable. Ejemplo: print('Hola' + variable);`);
-                
+
                 }
             }
             else if (line.includes("print")) {
@@ -214,38 +214,44 @@ const validateLine = (line, lineNumber, analyzer) => {
                                     semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
                                 } else {
                                     for (let i = 0; i < iterationIndices.length; i++) {
-                                        const newPrint = text +  analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
+                                        const newPrint = text + analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
                                         outputs.push(newPrint);
                                     }
                                 }
                             }
                         }
                         else if (fromMainTask) {
-                            const newPrint = text +  analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
-                            outputs.push(newPrint);
-                            fromMainTask = false;
+                            let error = analyzer.checkVariableDeclaration(variable);
+                            if (error) {
+                                semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
+                            }
+                            else {
+                                const newPrint = text + analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
+                                outputs.push(newPrint);
+                                fromMainTask = false;
+                            }
                         }
                         else if (variable == functionParam) {
                             functionParam = null;
-                        } 
+                        }
                         else {
                             let error = analyzer.checkVariableDeclaration(variable);
                             if (error) {
                                 semanticLogErrors.push(`Linea ${lineNumber} ${error}`);
                             } else if (conditionAccepted) {
-                                const newPrint = text +  analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
+                                const newPrint = text + analyzer.getVariableValue(variable).replace(/^'|'$/g, '');
                                 outputs.push(newPrint);
                                 conditionAccepted = false;
                             }
                         }
                     }
-                    else{
+                    else {
                         semanticLogErrors.push(`Linea ${lineNumber} Error: Se debe concatenar una variable para imprimir.`);
                     }
                 }
-                else{
+                else {
                     semanticLogErrors.push(`Linea ${lineNumber} Error: La instrucción print debe contener una cadena seguida de una variable. Ejemplo: print('Hola' + variable);`);
-                
+
                 }
             }
             return null;
@@ -270,17 +276,17 @@ const validateCode = (codeToValidate) => {
 
     for (let i = 0; i < lines.length; i++) {
         let line = lines[i];
-        
+
 
         if (line.trim().startsWith("task") || line.trim().startsWith("iterate") || line.trim().startsWith("mainTask") || line.trim().startsWith("conditional")) {
-           if (line.trim().endsWith("}")){
+            if (line.trim().endsWith("}")) {
                 statementWithBracketsOneLine = line.replace(/\{/g, "{\n").replace(/\}/g, "\n}");
                 const error = validateLine(statementWithBracketsOneLine, i, analyzer);
                 if (error) {
                     newErrors[i] = error;
                 }
             }
-            
+
             if (blockCode.trim() !== "") {
                 const error = validateLine(blockCode, i, analyzer);
                 if (error) {
