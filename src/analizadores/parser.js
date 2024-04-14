@@ -10,24 +10,24 @@ const grammar = [
         message: "La asignación no es válida.",
     },
     {
-        regex: /^(|task\s+[a-zA-Z]+\s*\((?:[a-zA-Z]+)?\)\s*\{\s*print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\);\s*\})$/,
+        regex: /^(|task\s+[a-zA-Z]+\s*\((?:[a-zA-Z]+)?\)\s*\{\s*print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\);\s*\})$/,
         message: "La definición de la función no es válida.",
     },
     {
-        regex: /^(|iterate\s+i\s+range\s+([0-9]+)\s*\.\.\.\s*([0-9]+)\s*\{\s*print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\);\s*\})$/, //terminado
+        regex: /^(|iterate\s+i\s+range\s+([0-9]+)\s*\.\.\.\s*([0-9]+)\s*\{\s*print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\);\s*\})$/, //terminado
         message: "El bucle no es válido.",
     },
     {
         regex:
-            /^(|conditional\s*\(\s*([a-zA-Z]+|\d+)\s*(<|>|<=|>=|==|!=)\s*([a-zA-Z]+|\d+)\s*\)\s*then\s*\{\s*print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\);\s*\})$/, //terminado
+            /^(|conditional\s*\(\s*([a-zA-Z]+|\d+)\s*(<|>|<=|>=|==|!=)\s*([a-zA-Z]+|\d+)\s*\)\s*then\s*\{\s*print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\);\s*\})$/, //terminado
         message: "El condicional no es válido.",
     },
     {
-        regex: /^(|mainTask\s*\(\)\s*{\s*print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\);\s*\})$/, //terminado
+        regex: /^(|mainTask\s*\(\)\s*{\s*print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\);\s*\})$/, //terminado
         message: "Funcion main no válida.",
     },
     {
-        regex: /^(print\(\s*'([^']+)'\s*\+\s*([a-zA-Z]+)\s*\));$/, //terminado
+        regex: /^(print\(\s*(?:([a-zA-Z]+|'[^']*')\s*\+)?(?:\s*([a-zA-Z]+|'[^']*'))\s*\));$/, //terminado
     }
 
 ];
@@ -35,6 +35,9 @@ const grammar = [
 let semanticLogErrors = []
 
 let outputs = [];
+
+let newErrors = {};
+
 
 const validateBrackets = (codeToValidate) => {
     const stack = [];
@@ -91,10 +94,9 @@ const evalCondition = (valor1, operador, valor2) => {
 }
 
 const validateLine = (line, lineNumber, analyzer) => {
-
     for (let rule of grammar) {
-        if (rule.regex.test(line.trim())) {
-
+        if (rule.regex.test(line.trim()) && Object.keys(newErrors).length === 0) {
+            console.log("line", line);
             let functionParam = null;
             let conditionAccepted = null;
             let iterationIndices = [];
@@ -116,7 +118,6 @@ const validateLine = (line, lineNumber, analyzer) => {
             }
             if (line.trim().startsWith("conditional")) {
                 const conditionStatement = line.match(/conditional\s*\((.*?)\)/);
-                console.log(conditionStatement);
                 if (conditionStatement) {
                     const conditionContent = conditionStatement[1].trim();
                     const conditionMatch = conditionContent.match(/(\w+|\d+)\s*(<=|>=|==|!=|<|>)\s*(\w+|\d+)/);
@@ -124,7 +125,6 @@ const validateLine = (line, lineNumber, analyzer) => {
                         let variable1 = conditionMatch[1];
                         const operator = conditionMatch[2];
                         let variable2 = conditionMatch[3];
-                        console.log(variable1, operator, variable2);
 
                         if (isNaN(Number(variable1))) {
                             let error = analyzer.checkVariableDeclaration(variable1);
@@ -139,11 +139,9 @@ const validateLine = (line, lineNumber, analyzer) => {
                         const conditionResult = evalCondition(variable1, operator, variable2);
                         if (conditionResult) {
                             conditionAccepted = true;
-                            console.log('true');
                         }
                         else {
                             conditionAccepted = false;
-                            console.log('false');
                         }
                     }
                 }
@@ -190,6 +188,10 @@ const validateLine = (line, lineNumber, analyzer) => {
                         }
                     }
                 }
+                else{
+                    semanticLogErrors.push(`Linea ${lineNumber} Error: La instrucción print debe contener una cadena seguida de una variable. Ejemplo: print('Hola' + variable);`);
+                
+                }
             }
             else if (line.includes("print")) {
                 const IntoPrint = line.match(/print\s*\((.*?)\)/);
@@ -198,7 +200,6 @@ const validateLine = (line, lineNumber, analyzer) => {
                 if (valores) {
                     const text = valores[1];
                     const variable = valores[2];
-
                     if (variable) {
                         if (fromAnIteratation && iterationIndices.length > 0) {
                             if (variable == 'i' && !analyzer.getVariableValue('i')) {
@@ -238,20 +239,27 @@ const validateLine = (line, lineNumber, analyzer) => {
                             }
                         }
                     }
+                    else{
+                        semanticLogErrors.push(`Linea ${lineNumber} Error: Se debe concatenar una variable para imprimir.`);
+                    }
+                }
+                else{
+                    semanticLogErrors.push(`Linea ${lineNumber} Error: La instrucción print debe contener una cadena seguida de una variable. Ejemplo: print('Hola' + variable);`);
+                
                 }
             }
             return null;
         }
     }
-    return `Error en la línea ${lineNumber}: en la declaración de: "${line.trim()}"`;
+    if (Object.keys(newErrors).length === 0) return `Error en la línea ${lineNumber}: en la declaración de: "${line.trim()}"`;
 };
 
 const validateCode = (codeToValidate) => {
 
+    newErrors = {};
 
     const lines = codeToValidate.split("\n");
 
-    const newErrors = {};
 
     let blockCode = "";
     let insideBlock = false;
@@ -265,8 +273,7 @@ const validateCode = (codeToValidate) => {
         
 
         if (line.trim().startsWith("task") || line.trim().startsWith("iterate") || line.trim().startsWith("mainTask") || line.trim().startsWith("conditional")) {
-
-           if (!/\n/.test(line)) {
+           if (line.trim().endsWith("}")){
                 statementWithBracketsOneLine = line.replace(/\{/g, "{\n").replace(/\}/g, "\n}");
                 const error = validateLine(statementWithBracketsOneLine, i, analyzer);
                 if (error) {
@@ -289,7 +296,6 @@ const validateCode = (codeToValidate) => {
             blockCode += line + "\n";
             if (line.trim() === "}") {
                 insideBlock = false;
-                console.log(blockCode);
                 const error = validateLine(blockCode, i, analyzer);
                 if (error) {
                     newErrors[i] = error;
@@ -317,6 +323,8 @@ const validateCode = (codeToValidate) => {
         finalOutputs = outputs;
         outputs = [];
     }
+
+
 
     return [newErrors, finalSemanticErrors, finalOutputs];
 };
